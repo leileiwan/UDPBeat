@@ -17,24 +17,23 @@ type Host struct {
 	Alive bool
 }
 
-var (
-	LevelInitHP    int = 3  // 接收到心跳时，HP最低为该值
-	LevelAliveHP   int = 7  // 复活时的HP
-	LevelFullHP    int = 10 // 满血时的HP
-	DEFAULTRECYCLE     = time.Second * 2
-)
-
 // use udp protocal
 type Watcher struct {
 	sync.Mutex
 	RecycleDuration time.Duration
 	Hosts           map[string]*Host
+	LevelInitHP     int // 接收到心跳时，HP最低为该值
+	LevelAliveHP    int // 复活时的HP
+	LevelFullHP     int // 满血时的HP
 }
 
-func NewWatcher() *Watcher {
+func NewWatcher(cycletime, LevelInitHP, LevelAliveHP, LevelFullHP int) *Watcher {
 	return &Watcher{
-		RecycleDuration: DEFAULTRECYCLE,
+		RecycleDuration: time.Duration(cycletime),
 		Hosts:           make(map[string]*Host, 100),
+		LevelInitHP:     LevelInitHP,
+		LevelAliveHP:    LevelAliveHP,
+		LevelFullHP:     LevelFullHP,
 	}
 }
 
@@ -57,15 +56,15 @@ func (this *Watcher) fix(msg UDPBeat.Message) {
 	ip := msg.GetIP()
 	h, ok := this.Hosts[ip]
 	if !ok {
-		this.Hosts[ip] = &Host{IP: ip, Time: time.Now(), HP: LevelFullHP, Alive: true}
+		this.Hosts[ip] = &Host{IP: ip, Time: time.Now(), HP: this.LevelFullHP, Alive: true}
 		return
 	}
 	h.HP += 1
-	if h.HP > LevelFullHP {
-		h.HP = LevelFullHP
+	if h.HP > this.LevelFullHP {
+		h.HP = this.LevelFullHP
 	}
-	if h.HP < LevelInitHP {
-		h.HP = LevelInitHP
+	if h.HP < this.LevelInitHP {
+		h.HP = this.LevelInitHP
 	}
 	h.Time = time.Now()
 	this.updateState(ip)
@@ -77,7 +76,7 @@ func (this *Watcher) updateState(ip string) {
 	if !ok {
 		return
 	}
-	if host.HP >= LevelAliveHP {
+	if host.HP >= this.LevelAliveHP {
 		host.Alive = true
 	}
 	if host.HP == 0 {

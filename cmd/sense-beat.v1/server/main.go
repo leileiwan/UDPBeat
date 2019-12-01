@@ -11,7 +11,7 @@ import (
 	"github.com/sense-beat/pkg/watch"
 )
 
-var watcher = watch.NewWatcher()
+var watcher *watch.Watcher
 
 func serverHttp(addr string) {
 	http.HandleFunc("/getTargetStatus", func(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +35,7 @@ func main() {
 	serverOption := option.NewServerOption()
 	serverOption.AddFlags(flag.CommandLine)
 	flag.Parse()
+	watcher = watch.NewWatcher(serverOption.CycleTime, serverOption.LevelInitHP, serverOption.LevelAliveHP, serverOption.LevelFullHP)
 
 	go serverHttp(":" + serverOption.HttpPort)
 
