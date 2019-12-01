@@ -31,3 +31,16 @@ endif
 ifeq ($(PROGRAME)$(PREFIX)$(CLIENTNAME)$(PREFIX)$(VERSION),$(wildcard $(PROGRAME)$(PREFIX)$(CLIENTNAME)$(PREFIX)$(VERSION)))
 	rm $(PROGRAME)$(PREFIX)$(CLIENTNAME)$(PREFIX)$(VERSION)
 endif
+
+
+.PHONY:test
+test:test_UDPBeat
+
+.PHONY:test_UDPBeat
+test_UDPBeat:
+	
+	@echo ............begin test the package UDPBeat............
+	@go test -v github.com/sense-beat/pkg/UDPBeat
+	@echo ............end test the package UDPBeat............
+	@echo
+	@echo
