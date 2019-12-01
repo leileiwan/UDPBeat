@@ -7,7 +7,7 @@ import (
 
 // SocketService struct
 type SocketService struct {
-	onConnect func()
+	onConnect func(chan Message)
 	laddr     string
 	listener  net.PacketConn
 	stopCh    chan error
@@ -30,10 +30,10 @@ func NewSocketService(laddr string) (*SocketService, error) {
 	return s, nil
 }
 
-// // RegConnectHandler register connect handler
-// func (s *SocketService) RegConnectHandler(handler func(*Session)) {
-// 	s.onConnect = handler
-// }
+// RegConnectHandler register connect handler
+func (s *SocketService) RegConnectHandler(handler func(chan Message)) {
+	s.onConnect = handler
+}
 
 // Serv Start socket service
 func (s *SocketService) Serv() {
@@ -41,7 +41,12 @@ func (s *SocketService) Serv() {
 		s.listener.Close()
 	}()
 
-	s.acceptHandler()
+	ch, err := s.acceptHandler()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	s.onConnect(ch)
 
 	for {
 		select {
@@ -53,8 +58,8 @@ func (s *SocketService) Serv() {
 	}
 }
 
-func (s *SocketService) acceptHandler() (chan string, error) {
-	ch := make(chan string)
+func (s *SocketService) acceptHandler() (chan Message, error) {
+	ch := make(chan Message)
 	buf := make([]byte, 1000)
 	go func() {
 		for {
@@ -72,8 +77,7 @@ func (s *SocketService) acceptHandler() (chan string, error) {
 				continue
 			}
 
-			// ip := strings.Split(addr.String(), ":")[0]
-			// ch <- ip
+			ch <- *msg
 
 		}
 	}()
