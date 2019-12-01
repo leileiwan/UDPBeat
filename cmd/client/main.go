@@ -1,34 +1,25 @@
 package main
 
 import (
-	"net"
+	"flag"
+	"fmt"
 
-	"time"
+	"github.com/sense-beat/pkg/UDPBeat"
+)
 
-	"github.com/9b9387/zero/pkg/tcpBeat"
+var (
+	serverAddr = flag.String("serverAddr", "127.0.0.1:7788", "heartbeat server address")
+	data       = flag.String("data", "I am ok", "The message sent to server")
+	cycleTime  = flag.Int("cycleTime", 5, "The cycle time that sent a message to server")
 )
 
 func main() {
-	go NewClientConnect()
-	time.Sleep(time.Second * 2)
-
-}
-func NewClientConnect() {
-	host := "127.0.0.1:18787"
-	tcpAddr, err := net.ResolveTCPAddr("tcp", host)
+	flag.Parse()
+	sc, err := UDPBeat.NewSockerClient(*serverAddr, *data, *cycleTime)
 	if err != nil {
-		return
+		fmt.Println(err)
 	}
 
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)
-	if err != nil {
-		return
-	}
+	sc.Serv()
 
-	msg := tcpBeat.NewMessage(1, []byte("Hello Zero!"))
-	data, err := tcpBeat.Encode(msg)
-	if err != nil {
-		return
-	}
-	conn.Write(data)
 }
