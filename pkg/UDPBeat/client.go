@@ -6,9 +6,6 @@ import (
 	"time"
 )
 
-var DEFAULTMSG = "imok"
-var DEFAULTG = time.Second
-
 // SocketClinet struct
 type SocketClient struct {
 	serverAddr string

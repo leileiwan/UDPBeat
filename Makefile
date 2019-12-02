@@ -34,13 +34,23 @@ endif
 
 
 .PHONY:test
-test:test_UDPBeat
+test:test-UDPBeat test-watch
 
-.PHONY:test_UDPBeat
-test_UDPBeat:
+.PHONY:test-UDPBeat
+test-UDPBeat:
 	
 	@echo ............begin test the package UDPBeat............
 	@go test -v github.com/sense-beat/pkg/UDPBeat
 	@echo ............end test the package UDPBeat............
 	@echo
 	@echo
+
+.PHONY:test-watch
+test-watch:
+	@echo ............begin test the package watch............
+	@go test -v github.com/sense-beat/pkg/watch
+	@echo ............end test the package watch............
+	@echo
+	@echo
+	
+

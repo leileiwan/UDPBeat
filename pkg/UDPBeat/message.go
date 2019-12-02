@@ -92,7 +92,6 @@ func Encode(msg *Message) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(buffer.Bytes()))
 
 	return buffer.Bytes(), nil
 }
