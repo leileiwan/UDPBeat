@@ -140,11 +140,8 @@ func (this *Watcher) GetTargetStatus(ip string) []byte {
 func (this *Watcher) Watch(ch chan UDPBeat.Message) {
 	go func() {
 		for {
-			fmt.Println("..............1")
 			msg := <-ch
-			fmt.Println(this.hosts)
 			this.fix(msg)
-			fmt.Println(this.hosts)
 		}
 	}()
 
@@ -154,7 +151,6 @@ func (this *Watcher) Watch(ch chan UDPBeat.Message) {
 // auto decrease host HP
 func (this *Watcher) drain() {
 	for {
-		fmt.Println("..............2")
 		this.Lock()
 		for _, host := range this.hosts {
 			this.hurt(host.IP)

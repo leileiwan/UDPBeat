@@ -34,7 +34,7 @@ endif
 
 
 .PHONY:test
-test:test-UDPBeat test-watch
+test:test-UDPBeat test-watch test-e2e
 
 .PHONY:test-UDPBeat
 test-UDPBeat:
@@ -52,5 +52,15 @@ test-watch:
 	@echo ............end test the package watch............
 	@echo
 	@echo
+
+.PHONY:test-e2e
+test-e2e:
+	@echo ............begin test the e2e............
+	@go test -v github.com/sense-beat/test/e2e
+	@echo ............end test the e2e............
+	@echo
+	@echo
+
+
 	
 
