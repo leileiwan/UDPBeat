@@ -20,26 +20,26 @@ type Host struct {
 // use udp protocal
 type Watcher struct {
 	sync.Mutex
-	RecycleDuration time.Duration
-	Hosts           map[string]*Host
-	LevelInitHP     int // 接收到心跳时，HP最低为该值
-	LevelAliveHP    int // 复活时的HP
-	LevelFullHP     int // 满血时的HP
+	recycleDuration time.Duration
+	hosts           map[string]*Host
+	levelInitHP     int // 接收到心跳时，HP最低为该值
+	levelAliveHP    int // 复活时的HP
+	levelFullHP     int // 满血时的HP
 }
 
-func NewWatcher(cycletime, LevelInitHP, LevelAliveHP, LevelFullHP int) *Watcher {
+func NewWatcher(cycletime time.Duration, levelInitHP, levelAliveHP, levelFullHP int) *Watcher {
 	return &Watcher{
-		RecycleDuration: time.Duration(cycletime),
-		Hosts:           make(map[string]*Host, 100),
-		LevelInitHP:     LevelInitHP,
-		LevelAliveHP:    LevelAliveHP,
-		LevelFullHP:     LevelFullHP,
+		recycleDuration: cycletime,
+		hosts:           make(map[string]*Host, 100),
+		levelInitHP:     levelInitHP,
+		levelAliveHP:    levelAliveHP,
+		levelFullHP:     levelFullHP,
 	}
 }
 
 // cut down HP
 func (this *Watcher) hurt(ip string) {
-	h, ok := this.Hosts[ip]
+	h, ok := this.hosts[ip]
 	if !ok {
 		return
 	}
@@ -54,17 +54,17 @@ func (this *Watcher) fix(msg UDPBeat.Message) {
 	this.Lock()
 	defer this.Unlock()
 	ip := msg.GetIP()
-	h, ok := this.Hosts[ip]
+	h, ok := this.hosts[ip]
 	if !ok {
-		this.Hosts[ip] = &Host{IP: ip, Time: time.Now(), HP: this.LevelFullHP, Alive: true}
+		this.hosts[ip] = &Host{IP: ip, Time: time.Now(), HP: this.levelFullHP, Alive: true}
 		return
 	}
 	h.HP += 1
-	if h.HP > this.LevelFullHP {
-		h.HP = this.LevelFullHP
+	if h.HP > this.levelFullHP {
+		h.HP = this.levelFullHP
 	}
-	if h.HP < this.LevelInitHP {
-		h.HP = this.LevelInitHP
+	if h.HP < this.levelInitHP {
+		h.HP = this.levelInitHP
 	}
 	h.Time = time.Now()
 	this.updateState(ip)
@@ -72,11 +72,11 @@ func (this *Watcher) fix(msg UDPBeat.Message) {
 
 // judge if host is Alive from HP
 func (this *Watcher) updateState(ip string) {
-	host, ok := this.Hosts[ip]
+	host, ok := this.hosts[ip]
 	if !ok {
 		return
 	}
-	if host.HP >= this.LevelAliveHP {
+	if host.HP >= this.levelAliveHP {
 		host.Alive = true
 	}
 	if host.HP == 0 {
@@ -88,9 +88,9 @@ func (this *Watcher) updateState(ip string) {
 func (this *Watcher) GetStatusALL() []byte {
 	this.Lock()
 	defer this.Unlock()
-	alives := make([]string, 0, len(this.Hosts))
-	deads := make([]string, 0, len(this.Hosts))
-	for ip, host := range this.Hosts {
+	alives := make([]string, 0, len(this.hosts))
+	deads := make([]string, 0, len(this.hosts))
+	for ip, host := range this.hosts {
 		if host.Alive {
 			alives = append(alives, ip)
 		} else {
@@ -118,7 +118,7 @@ func (this *Watcher) GetTargetStatus(ip string) []byte {
 		Status string //alive,dead,notfound
 	}
 	data.IP = ip
-	host, ok := this.Hosts[ip]
+	host, ok := this.hosts[ip]
 	if !ok {
 		data.Status = "notfound"
 	} else {
@@ -140,8 +140,11 @@ func (this *Watcher) GetTargetStatus(ip string) []byte {
 func (this *Watcher) Watch(ch chan UDPBeat.Message) {
 	go func() {
 		for {
+			fmt.Println("..............1")
 			msg := <-ch
+			fmt.Println(this.hosts)
 			this.fix(msg)
+			fmt.Println(this.hosts)
 		}
 	}()
 
@@ -151,11 +154,17 @@ func (this *Watcher) Watch(ch chan UDPBeat.Message) {
 // auto decrease host HP
 func (this *Watcher) drain() {
 	for {
+		fmt.Println("..............2")
 		this.Lock()
-		for _, host := range this.Hosts {
+		for _, host := range this.hosts {
 			this.hurt(host.IP)
 		}
 		this.Unlock()
-		time.Sleep(this.RecycleDuration)
+		time.Sleep(this.recycleDuration)
 	}
+}
+
+//add for test
+func (watcher *Watcher) SetRecycleTime(time time.Duration) {
+	watcher.recycleDuration = time
 }

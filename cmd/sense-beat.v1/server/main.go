@@ -24,7 +24,6 @@ func serverHttp(addr string) {
 
 	})
 	http.HandleFunc("/getAllStatus", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(r)
 		w.Write(watcher.GetStatusALL())
 	})
 

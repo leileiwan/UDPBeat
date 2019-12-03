@@ -25,8 +25,8 @@ func (sc *SocketClient) Serv() {
 	}
 }
 
-func NewSockerClient(serverAddr, data string, cycleTime int) (*SocketClient, error) {
-	localIP, err := getInternal()
+func NewSockerClient(serverAddr, data string, cycleTime time.Duration) (*SocketClient, error) {
+	localIP, err := GetInternal()
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func NewSockerClient(serverAddr, data string, cycleTime int) (*SocketClient, err
 		serverAddr: serverAddr,
 		stopCh:     make(chan error),
 		msg:        msg,
-		cycleTime:  time.Duration(cycleTime) * time.Second,
+		cycleTime:  cycleTime,
 	}, nil
 }
 
@@ -68,7 +68,7 @@ func (sc *SocketClient) sentHandler() {
 
 }
 
-func getInternal() (string, error) {
+func GetInternal() (string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return "", err
@@ -78,9 +78,13 @@ func getInternal() (string, error) {
 		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
 				ip = ipnet.IP.To4().String()
-				fmt.Printf("The local Ip has %s\n", ip)
 			}
 		}
 	}
 	return ip, err
+}
+
+//add for test
+func (sc *SocketClient) SetRecycleTime(time time.Duration) {
+	sc.cycleTime = time
 }
