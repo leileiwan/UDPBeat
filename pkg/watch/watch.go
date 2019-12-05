@@ -43,9 +43,13 @@ func (this *Watcher) hurt(ip string) {
 	if !ok {
 		return
 	}
-	if h.HP -= 1; h.HP < 0 {
-		h.HP = 0
+	h.HP -= 1
+	if h.HP < -5 {
+		// h.HP = 0
+		// delete the host from this.hosts
+		delete(this.hosts, ip)
 	}
+
 	this.updateState(ip)
 }
 
@@ -79,7 +83,7 @@ func (this *Watcher) updateState(ip string) {
 	if host.HP >= this.levelAliveHP {
 		host.Alive = true
 	}
-	if host.HP == 0 {
+	if host.HP <= 0 {
 		host.Alive = false
 	}
 }
@@ -140,6 +144,9 @@ func (this *Watcher) GetTargetStatus(ip string) []byte {
 func (this *Watcher) Watch(ch chan UDPBeat.Message) {
 	go func() {
 		for {
+			if UDPBeat.Flag == false {
+				return
+			}
 			msg := <-ch
 			this.fix(msg)
 		}
@@ -151,6 +158,9 @@ func (this *Watcher) Watch(ch chan UDPBeat.Message) {
 // auto decrease host HP
 func (this *Watcher) drain() {
 	for {
+		if UDPBeat.Flag == false {
+			return
+		}
 		this.Lock()
 		for _, host := range this.hosts {
 			this.hurt(host.IP)
@@ -162,5 +172,12 @@ func (this *Watcher) drain() {
 
 //add for test
 func (watcher *Watcher) SetRecycleTime(time time.Duration) {
+	if watcher == nil {
+		fmt.Println(fmt.Errorf("The watcher is nil..."))
+	}
 	watcher.recycleDuration = time
+}
+
+func (watcher *Watcher) Clean() {
+	watcher.hosts = make(map[string]*Host, 10)
 }
