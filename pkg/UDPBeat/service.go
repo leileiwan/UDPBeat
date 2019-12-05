@@ -5,12 +5,15 @@ import (
 	"net"
 )
 
+var Flag = true //for watch
+
 // SocketService struct
 type SocketService struct {
 	onConnect func(chan Message)
 	laddr     string
 	listener  net.PacketConn
 	stopCh    chan error
+	Flag      bool //作为server是否running的标志，方便回收携程，在测试中很重要
 }
 
 // NewSocketService create a new socket service
@@ -45,7 +48,8 @@ func (s *SocketService) Serv() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
+	s.Flag = true
+	Flag = true
 	s.onConnect(ch)
 
 	for {
@@ -63,6 +67,9 @@ func (s *SocketService) acceptHandler() (chan Message, error) {
 	buf := make([]byte, 1000)
 	go func() {
 		for {
+			if s.Flag == false {
+				return
+			}
 			//recive bytes
 			n, addr, err := s.listener.ReadFrom(buf)
 			if err != nil {
@@ -83,4 +90,14 @@ func (s *SocketService) acceptHandler() (chan Message, error) {
 	}()
 
 	return ch, nil
+}
+
+func (s *SocketService) Close() {
+	if s == nil {
+		fmt.Println(fmt.Errorf("The SocketService is nil..."))
+	}
+	s.Flag = false
+	Flag = false
+	s.stopCh <- fmt.Errorf("To end...")
+
 }

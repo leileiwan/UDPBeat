@@ -12,9 +12,11 @@ type SocketClient struct {
 	stopCh     chan error
 	msg        *Message
 	cycleTime  time.Duration
+	Flag       bool
 }
 
 func (sc *SocketClient) Serv() {
+	sc.Flag = true
 	sc.sentHandler()
 	for {
 		select {
@@ -57,8 +59,12 @@ func (sc *SocketClient) Beat() error {
 func (sc *SocketClient) sentHandler() {
 	go func() {
 		for {
+			if sc.Flag == false {
+				return
+			}
 			err := sc.Beat()
 			if err != nil {
+				fmt.Println(".........")
 				fmt.Println(err)
 			}
 			fmt.Printf("Send the message %v\n", sc.msg)
@@ -86,5 +92,16 @@ func GetInternal() (string, error) {
 
 //add for test
 func (sc *SocketClient) SetRecycleTime(time time.Duration) {
+	if sc == nil {
+		fmt.Println(fmt.Errorf("The SocketClient is nil..."))
+	}
 	sc.cycleTime = time
+}
+
+func (sc *SocketClient) Close() {
+	if sc == nil {
+		fmt.Println(fmt.Errorf("The SocketClient is nil..."))
+	}
+	sc.Flag = false
+	sc.stopCh <- fmt.Errorf("To end...")
 }
